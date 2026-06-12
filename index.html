@@ -2522,8 +2522,25 @@ async function saveSetting_(kat) {
   closeModal(); loader(true);
   try {
     await fetchAPI('saveSetting', { kategori: kat, nominal: v });
-    loader(false); toast('Pengaturan disimpan'); loadSettings();
-  } catch (err) { loader(false); toast('Error','error'); }
+    loader(false); 
+    toast('Pengaturan disimpan'); 
+    loadSettings();
+    
+    // Menyembunyikan atau memunculkan menu Arisan secara instan
+    if (kat === 'Status Arisan') {
+      document.querySelectorAll('[data-page="arisan"]').forEach(e => {
+        e.style.display = v === 'Aktif' ? '' : 'none';
+      });
+      
+      // Jika Arisan dinonaktifkan saat halamannya sedang dibuka, otomatis pindah ke Dashboard
+      if (v === 'Nonaktif' && el('p-arisan').classList.contains('active')) {
+        nav('dashboard', document.querySelector('[data-page="dashboard"]'));
+      }
+    }
+  } catch (err) { 
+    loader(false); 
+    toast('Error','error'); 
+  }
 }
 
 /* ═══════════════════════════════════
