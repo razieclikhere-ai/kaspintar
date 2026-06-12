@@ -2260,22 +2260,37 @@ async function activateUser(id) {
 }
 
 async function saveUserData() {
-  const id = el('uId').value;
+  const idEl = el('uId');
+  const id = idEl ? idEl.value.trim() : "";
   const data = {
     nama:el('uNama').value.trim(), email:el('uEmail').value.trim(),
     hp:el('uHp').value.trim(), tglLahir:el('uTgl').value,
     role:el('uRole').value, status:el('uStatus').value, password:el('uPass').value.trim()
   };
-  if (id) data.id = id;
-  else if (!data.email || !data.password) { toast('Email dan password wajib untuk anggota baru','error'); return; }
   
+  if (id && id !== "undefined" && id !== "") {
+    data.id = id;
+  } else {
+    if (!data.email || !data.password) { 
+      toast('Email dan password wajib diisi untuk anggota baru!','error'); 
+      return; 
+    }
+  }
+
   closeModal(); loader(true);
   try {
     const r = await fetchAPI('saveMember', { data });
     loader(false);
-    if (r?.success) { toast(r.message||'Tersimpan!'); loadTable('users'); }
-    else toast(r?.message||'Gagal','error');
-  } catch(err) { loader(false); toast('Error','error'); }
+    if (r?.success) { 
+      toast(r.message||'Tersimpan!'); 
+      loadTable('users'); 
+    } else {
+      toast(r?.message||'Gagal','error');
+    }
+  } catch(err) { 
+    loader(false); 
+    toast('Terjadi kesalahan','error'); 
+  }
 }
 
 /* ═══════════════════════════════════
