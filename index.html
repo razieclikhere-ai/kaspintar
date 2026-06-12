@@ -2209,6 +2209,155 @@ function delRow(type, id) {
   }, true);
 }
 
+/* --- FUNGSI PENAMPIL TABEL YANG SEBELUMNYA HILANG --- */
+async function loadTable(type) {
+  loader(true);
+  try {
+    const r = await fetchAPI('getTableData', { type });
+    loader(false);
+    if (!r?.success) return;
+
+    const data = r.data || [];
+    
+    // TABEL TRANSAKSI
+    if (type === 'transaksi') {
+      const tb = el('tbT');
+      if (!data.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="bi bi-receipt"></i><p>Belum ada transaksi</p></div></td></tr>'; return; }
+      tb.innerHTML = data.map((x, i) => {
+        const isIn = String(x.jenis).trim() === 'Pemasukan';
+        const isIur = String(x.id).startsWith('IUR');
+        return `<tr>
+          <td style="color:var(--ink4);font-size:11px;font-weight:700;">${i+1}</td>
+          <td style="white-space:nowrap;">${x.tgl}</td>
+          <td><span class="bdg ${isIn?'b-gr':'b-rd'}">${x.jenis}</span></td>
+          <td>${x.kategori||'-'}</td>
+          <td style="max-width:180px;white-space:normal;">${x.ket||'-'}</td>
+          <td style="font-weight:800;color:${isIn?'var(--greend)':'var(--red)'};">${fmt(x.nominal)}</td>
+          <td>
+            ${!isIur ? `<div style="display:flex;gap:6px;">
+              <button class="btn btn-gh btn-sm btn-ic" onclick='editTrans(${JSON.stringify(x).replace(/'/g,"&#39;")})'><i class="bi bi-pencil-fill"></i></button>
+              <button class="btn btn-rd btn-sm btn-ic" onclick="delRow('transaksi','${x.id}')"><i class="bi bi-trash-fill"></i></button>
+            </div>` : '<span style="font-size:11px;color:var(--ink3);font-weight:700;">Via Iuran</span>'}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+    
+    // TABEL IURAN
+    else if (type === 'iuran') {
+      const tb = el('tbI');
+      if (!data.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="bi bi-wallet"></i><p>Belum ada data iuran</p></div></td></tr>'; return; }
+      tb.innerHTML = data.map((x, i) => `<tr>
+        <td style="color:var(--ink4);font-size:11px;font-weight:700;">${i+1}</td>
+        <td style="white-space:nowrap;">${x.tgl}</td>
+        <td style="font-weight:800;color:var(--ink2);">${x.nama}</td>
+        <td><span class="bdg b-gy">${x.bulan} ${x.tahun}</span></td>
+        <td><span class="bdg b-bl">${x.jenis}</span></td>
+        <td style="font-weight:800;color:var(--greend);">${fmt(x.nominal)}</td>
+        <td style="max-width:150px;white-space:normal;">${x.ket||'-'}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-gh btn-sm btn-ic" onclick='editIuran(${JSON.stringify(x).replace(/'/g,"&#39;")})'><i class="bi bi-pencil-fill"></i></button>
+            <button class="btn btn-rd btn-sm btn-ic" onclick="delRow('iuran','${x.id}')"><i class="bi bi-trash-fill"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+    }
+    
+    // TABEL ANGGOTA
+    else if (type === 'users') {
+      const tb = el('tbU');
+      if (!data.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="bi bi-people"></i><p>Belum ada anggota</p></div></td></tr>'; return; }
+      tb.innerHTML = data.map((x, i) => {
+        const isAktif = String(x.status).trim() === 'Aktif';
+        return `<tr>
+          <td style="color:var(--ink4);font-size:11px;font-weight:700;">${i+1}</td>
+          <td style="font-weight:800;color:var(--ink2);">${x.nama}</td>
+          <td>${x.email}</td>
+          <td>${x.hp||'-'}</td>
+          <td><span class="bdg ${String(x.role).trim()==='Admin'?'b-pu':'b-gy'}">${x.role}</span></td>
+          <td><span class="bdg ${isAktif?'b-gr':(String(x.status).trim()==='Pending'?'b-am':'b-rd')}">${x.status}</span></td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              ${!isAktif ? `<button class="btn btn-gr btn-sm btn-ic" title="Aktifkan" onclick="activateUser('${x.id}')"><i class="bi bi-check-circle-fill"></i></button>` : ''}
+              <button class="btn btn-gh btn-sm btn-ic" onclick='editUser(${JSON.stringify(x).replace(/'/g,"&#39;")})'><i class="bi bi-pencil-fill"></i></button>
+              <button class="btn btn-rd btn-sm btn-ic" onclick="delRow('users','${x.id}')"><i class="bi bi-trash-fill"></i></button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+  } catch(err) { loader(false); toast('Gagal memuat data', 'error'); }
+}
+
+async function loadTunggakan() {
+  loader(true);
+  try {
+    const r = await fetchAPI('getTunggakanData');
+    loader(false);
+    if (!r?.success) return;
+    const tb = el('tngReport');
+    if (!r.list || !r.list.length) {
+      tb.innerHTML = '<div class="empty"><i class="bi bi-emoji-smile" style="font-size:48px;color:var(--greend);margin-bottom:12px;display:block;"></i><p>Bagus! Tidak ada tunggakan.</p></div>';
+      return;
+    }
+    tb.innerHTML = r.list.map(x => `
+      <div class="ti">
+        <div class="ti-av">${x.nama.charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="ti-nm">${x.nama}</div>
+          <div class="ti-dt"><i class="bi bi-whatsapp" style="color:#25D366;margin-right:4px;"></i>${x.hp||'-'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="ti-am">${fmt(x.nominal)}</div>
+          <div class="ti-pr">${x.siklusTelat} Bulan Nunggak</div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { loader(false); toast('Gagal memuat tunggakan', 'error'); }
+}
+
+async function loadStatus() {
+  const val = el('stPeriode').value;
+  if (!val) return;
+  loader(true);
+  try {
+    const r = await fetchAPI('getStatusPembayaranData', { periode: val });
+    loader(false);
+    if (!r?.success) return;
+    const c = el('stContent');
+    const mapHtml = (arr, isOk) => arr.length ? arr.map(x => `
+      <div class="stp">
+        <div class="sta" style="background:${isOk?'var(--green)':'var(--red)'};">
+          <i class="bi bi-${isOk?'check':'x'}-lg"></i>
+        </div>
+        <div style="flex:1;font-weight:700;color:var(--ink2);">${x.nama}</div>
+      </div>
+    `).join('') : '<div style="font-size:13px;color:var(--ink3);">Tidak ada data</div>';
+    
+    c.innerHTML = `
+      <div class="stg">
+        <div>
+          <div class="stct" style="color:var(--greend);"><i class="bi bi-check-circle-fill"></i> Sudah Bayar</div>
+          ${mapHtml(r.sudahBayar, true)}
+        </div>
+        <div>
+          <div class="stct" style="color:var(--red);"><i class="bi bi-x-circle-fill"></i> Belum Bayar</div>
+          ${mapHtml(r.belumBayar, false)}
+        </div>
+      </div>
+    `;
+  } catch(e) { loader(false); toast('Gagal memuat status', 'error'); }
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  el('tIuranList').classList.add('hidden');
+  el('tStatusBayar').classList.add('hidden');
+  el(id).classList.remove('hidden');
+}
+
 /* ═══════════════════════════════════
    USERS
 ═══════════════════════════════════ */
