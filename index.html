@@ -2382,6 +2382,7 @@ function switchTab(id, btn) {
    USERS
 ═══════════════════════════════════ */
 function openUserForm(data) {
+  const tglHariIni = new Date().toISOString().split('T')[0];
   openModal(data?'Edit Anggota':'Tambah Anggota', `
     <input type="hidden" id="uId" value="${data?.id||''}">
     <div class="fg"><label class="fl">Nama Lengkap</label>
@@ -2393,25 +2394,27 @@ function openUserForm(data) {
         <input class="fc" id="uHp" value="${data?.hp||''}"></div>
     </div>
     <div class="fg2">
+      <div class="fg"><label class="fl">Tgl Bergabung</label>
+        <input type="date" class="fc" id="uTglDaftar" value="${data?.tglDaftar||tglHariIni}"></div>
       <div class="fg"><label class="fl">Tgl Lahir</label>
         <input type="date" class="fc" id="uTgl" value="${data?.tglLahir||''}"></div>
+    </div>
+    <div class="fg2">
       <div class="fg"><label class="fl">Role</label>
         <select class="fs" id="uRole">
           <option ${String(data?.role).trim()==='User'?'selected':''}>User</option>
           <option ${String(data?.role).trim()==='Admin'?'selected':''}>Admin</option>
         </select></div>
-    </div>
-    <div class="fg2">
       <div class="fg"><label class="fl">Status</label>
         <select class="fs" id="uStatus">
           <option ${String(data?.status).trim()==='Aktif'?'selected':''}>Aktif</option>
           <option ${String(data?.status).trim()==='Pending'?'selected':''}>Pending</option>
           <option ${String(data?.status).trim()==='Nonaktif'?'selected':''}>Nonaktif</option>
         </select></div>
-      <div class="fg"><label class="fl">Password ${data?'(kosong = tidak diubah)':''}</label>
-        <input type="password" class="fc" id="uPass"
-               placeholder="${data?'Isi jika ingin mengubah':'Password baru'}"></div>
-    </div>`,
+    </div>
+    <div class="fg"><label class="fl">Password ${data?'(kosong = tidak diubah)':''}</label>
+      <input type="password" class="fc" id="uPass"
+             placeholder="${data?'Isi jika ingin mengubah':'Password baru'}"></div>`,
     [{ text:data?'Simpan':'Tambah Anggota', cls:'btn-bl', action:'saveUserData()' },
      { text:'Batal', cls:'btn-gh', action:'closeModal()' }]
   );
@@ -2434,6 +2437,7 @@ async function saveUserData() {
   const data = {
     nama:el('uNama').value.trim(), email:el('uEmail').value.trim(),
     hp:el('uHp').value.trim(), tglLahir:el('uTgl').value,
+    tglDaftar:el('uTglDaftar').value,
     role:el('uRole').value, status:el('uStatus').value, password:el('uPass').value.trim()
   };
   
