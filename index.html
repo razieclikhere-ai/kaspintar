@@ -2302,7 +2302,7 @@ async function loadTunggakan() {
       return;
     }
     tb.innerHTML = r.list.map(x => `
-      <div class="ti">
+      <div class="ti" style="cursor:pointer;" onclick="detailTunggakan(this)" data-nama="${x.nama}" data-nom="${x.nominal}" data-sik="${x.siklusTelat}" data-det="${encodeURIComponent(JSON.stringify(x.detail))}">
         <div class="ti-av">${x.nama.charAt(0).toUpperCase()}</div>
         <div style="flex:1;min-width:0;">
           <div class="ti-nm">${x.nama}</div>
@@ -2310,11 +2310,31 @@ async function loadTunggakan() {
         </div>
         <div style="text-align:right;">
           <div class="ti-am">${fmt(x.nominal)}</div>
-          <div class="ti-pr">${x.siklusTelat} Bulan Nunggak</div>
+          <div class="ti-pr"><span style="color:var(--red); font-weight:800;">Klik lihat detail </span>(${x.siklusTelat} Bulan)</div>
         </div>
       </div>
     `).join('');
   } catch(e) { loader(false); toast('Gagal memuat tunggakan', 'error'); }
+}
+
+function detailTunggakan(elBtn) {
+  const nama = elBtn.getAttribute('data-nama');
+  const nominal = parseFloat(elBtn.getAttribute('data-nom'));
+  const siklus = elBtn.getAttribute('data-sik');
+  const detail = JSON.parse(decodeURIComponent(elBtn.getAttribute('data-det')));
+  
+  const htmlList = detail.map(b => `<div style="padding:14px 16px; border-bottom:1px solid var(--border); font-weight:700; color:var(--ink2); display:flex; align-items:center; gap:12px;"><i class="bi bi-calendar-x" style="color:var(--red); font-size:18px;"></i>${b}</div>`).join('');
+  
+  openModal('Detail Tunggakan', `
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:16px; font-weight:800; color:var(--ink2); font-family:var(--font-head);">${nama}</div>
+      <div style="font-size:28px; font-weight:900; color:var(--red); margin:4px 0; font-family:var(--font-head);">${fmt(nominal)}</div>
+      <div style="font-size:13px; font-weight:700; background:var(--reds); display:inline-block; padding:4px 12px; border-radius:99px; color:var(--red);">Total ${siklus} Bulan Menunggak</div>
+    </div>
+    <div style="background:var(--surface); border-radius:16px; border:2px solid var(--border); max-height:250px; overflow-y:auto; box-shadow:var(--sh0);">
+      ${htmlList}
+    </div>
+  `, [{ text:'Tutup', cls:'btn-gh', action:'closeModal()' }]);
 }
 
 async function loadStatus() {
