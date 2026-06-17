@@ -772,7 +772,7 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
 
 @media (max-width: 768px) {
   #mbBtn { display: grid; }
-  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); width: 280px; border-radius: 0 30px 30px 0; border: none; }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); width: 280px; border-radius: 0 30px 30px 0; border: none; padding-bottom: 90px; }
   .sidebar.open { transform: translateX(0); box-shadow: 10px 0 40px rgba(0,0,0,0.15); }
   .content { padding: 20px 16px 160px; overflow-y: auto; }
   .topbar { padding: 0 20px; border-bottom: none; box-shadow: 0 4px 20px rgba(255,117,143,.05); z-index: 10; position: relative; }
@@ -965,7 +965,7 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
     <div class="nv active" onclick="nav('dashboard',this)" data-page="dashboard">
       <i class="bi bi-grid-1x2-fill"></i>Dashboard
     </div>
-    <div class="nv" onclick="nav('transaksi',this)" data-page="transaksi">
+    <div class="nv col-admin" onclick="nav('transaksi',this)" data-page="transaksi">
       <i class="bi bi-arrow-left-right"></i>Transaksi
     </div>
     <div class="nv" onclick="nav('iuran',this)" data-page="iuran">
@@ -976,6 +976,9 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
     </div>
     <div class="nv" onclick="nav('tunggakan',this)" data-page="tunggakan">
       <i class="bi bi-exclamation-triangle-fill"></i>Tunggakan
+    </div>
+    <div class="nv" onclick="nav('profil',this)" data-page="profil">
+      <i class="bi bi-person-circle"></i>Profil Saya
     </div>
     <div class="sb-sec col-admin">Admin</div>
     <div class="nv col-admin" onclick="nav('laporan',this)" data-page="laporan">
@@ -1237,17 +1240,17 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
     <button class="mn active" onclick="nav('dashboard',this)" data-page="dashboard">
       <i class="bi bi-grid-1x2-fill"></i>Home
     </button>
-    <button class="mn" onclick="nav('transaksi',this)" data-page="transaksi">
+    <button class="mn col-admin" onclick="nav('transaksi',this)" data-page="transaksi">
       <i class="bi bi-arrow-left-right"></i>Kas
     </button>
     <button class="mn" onclick="nav('iuran',this)" data-page="iuran">
       <i class="bi bi-wallet-fill"></i>Iuran
     </button>
-    <button class="mn" onclick="nav('arisan',this)" data-page="arisan">
-      <i class="bi bi-trophy-fill"></i>Arisan
-    </button>
     <button class="mn" onclick="nav('tunggakan',this)" data-page="tunggakan">
       <i class="bi bi-exclamation-triangle-fill"></i>Nunggak
+    </button>
+    <button class="mn" onclick="nav('profil',this)" data-page="profil">
+      <i class="bi bi-person-circle"></i>Profil
     </button>
   </div>
 </nav>
@@ -1290,7 +1293,7 @@ const WCOLORS = [
 const PTITLES = {
   dashboard:'Dashboard', transaksi:'Transaksi', iuran:'Iuran',
   arisan:'Arisan', tunggakan:'Tunggakan', laporan:'Laporan',
-  users:'Anggota', settings:'Pengaturan'
+  users:'Anggota', settings:'Pengaturan', profil:'Profil Saya'
 };
 
 /* ═══════════════════════════════════
@@ -1592,7 +1595,8 @@ function nav(pg, btn) {
     tunggakan: () => loadTunggakan(),
     laporan:   () => loadLaporan(),
     users:     () => loadTable('users'),
-    settings:  () => loadSettings()
+    settings:  () => loadSettings(),
+    profil:    () => loadMyProfil()
   };
   loaders[pg]?.();
 }
@@ -2217,7 +2221,11 @@ async function loadTable(type) {
     loader(false);
     if (!r?.success) return;
 
-    const data = r.data || [];
+    let data = r.data || [];
+    // Filter otomatis: Jika bukan Admin, hanya tampilkan Iuran miliknya sendiri
+    if (currUser.role !== 'Admin' && type === 'iuran') {
+      data = data.filter(x => String(x.nama).trim() === String(currUser.nama).trim());
+    }
     
     // TABEL TRANSAKSI
     if (type === 'transaksi') {
@@ -2296,12 +2304,19 @@ async function loadTunggakan() {
     const r = await fetchAPI('getTunggakanData');
     loader(false);
     if (!r?.success) return;
+    
+    let listData = r.list || [];
+    // Filter otomatis: Jika bukan Admin, hanya tampilkan Tunggakannya sendiri
+    if (currUser.role !== 'Admin') {
+      listData = listData.filter(x => String(x.nama).trim() === String(currUser.nama).trim());
+    }
+    
     const tb = el('tngReport');
-    if (!r.list || !r.list.length) {
+    if (!listData.length) {
       tb.innerHTML = '<div class="empty"><i class="bi bi-emoji-smile" style="font-size:48px;color:var(--greend);margin-bottom:12px;display:block;"></i><p>Bagus! Tidak ada tunggakan.</p></div>';
       return;
     }
-    tb.innerHTML = r.list.map(x => `
+    tb.innerHTML = listData.map(x => `
       <div class="ti" style="cursor:pointer;" onclick="detailTunggakan(this)" data-nama="${x.nama}" data-nom="${x.nominal}" data-sik="${x.siklusTelat}" data-det="${encodeURIComponent(JSON.stringify(x.detail))}">
         <div class="ti-av">${x.nama.charAt(0).toUpperCase()}</div>
         <div style="flex:1;min-width:0;">
@@ -2325,16 +2340,24 @@ function detailTunggakan(elBtn) {
   
   const htmlList = detail.map(b => `<div style="padding:14px 16px; border-bottom:1px solid var(--border); font-weight:700; color:var(--ink2); display:flex; align-items:center; gap:12px;"><i class="bi bi-calendar-x" style="color:var(--red); font-size:18px;"></i>${b}</div>`).join('');
   
+  // Membuat nama file PDF yang aman (menghapus spasi dan simbol)
+  const namaFile = 'Detail_Tunggakan_' + nama.replace(/[^a-zA-Z0-9]/g, '_');
+  
   openModal('Detail Tunggakan', `
-    <div style="text-align:center; margin-bottom:24px;">
-      <div style="font-size:16px; font-weight:800; color:var(--ink2); font-family:var(--font-head);">${nama}</div>
-      <div style="font-size:28px; font-weight:900; color:var(--red); margin:4px 0; font-family:var(--font-head);">${fmt(nominal)}</div>
-      <div style="font-size:13px; font-weight:700; background:var(--reds); display:inline-block; padding:4px 12px; border-radius:99px; color:var(--red);">Total ${siklus} Bulan Menunggak</div>
+    <div id="printAreaDetail" style="padding:10px; background:var(--surface);">
+      <div style="text-align:center; margin-bottom:24px;">
+        <div style="font-size:16px; font-weight:800; color:var(--ink2); font-family:var(--font-head);">${nama}</div>
+        <div style="font-size:28px; font-weight:900; color:var(--red); margin:4px 0; font-family:var(--font-head);">${fmt(nominal)}</div>
+        <div style="font-size:13px; font-weight:700; background:var(--reds); display:inline-block; padding:4px 12px; border-radius:99px; color:var(--red);">Total ${siklus} Bulan Menunggak</div>
+      </div>
+      <div style="background:var(--surface); border-radius:16px; border:2px solid var(--border); box-shadow:var(--sh0);">
+        ${htmlList}
+      </div>
     </div>
-    <div style="background:var(--surface); border-radius:16px; border:2px solid var(--border); max-height:250px; overflow-y:auto; box-shadow:var(--sh0);">
-      ${htmlList}
-    </div>
-  `, [{ text:'Tutup', cls:'btn-gh', action:'closeModal()' }]);
+  `, [
+    { text:'<i class="bi bi-file-earmark-arrow-down"></i> Export PDF', cls:'btn-bl', action:`exportPDF('printAreaDetail', '${namaFile}')` },
+    { text:'Tutup', cls:'btn-gh', action:'closeModal()' }
+  ]);
 }
 
 async function loadStatus() {
@@ -2718,6 +2741,48 @@ function _fireNotif(title, body, badge) {
     }
   } catch(e) { console.warn('Notification failed:', e); }
 }
+
+function loadMyProfil() {
+  el('myNama').value = currUser.nama || '';
+  el('myEmail').value = currUser.email || '';
+  el('myHp').value = currUser.hp || '';
+  
+  // Ambil tanggal lahir dari database
+  fetchAPI('getTableData', { type: 'users' }).then(r => {
+    if(r.success) {
+      const me = r.data.find(u => String(u.id) === String(currUser.id));
+      if(me && me.tglLahir) el('myTglLahir').value = me.tglLahir;
+    }
+  });
+}
+
+async function saveMyProfil() {
+  const hp = el('myHp').value;
+  const tglLahir = el('myTglLahir').value;
+  const pass = el('myPass').value;
+  
+  btnLoad('btnSaveProfil', true);
+  try {
+    const data = { id: currUser.id, hp: hp, tglLahir: tglLahir };
+    if(pass) data.password = pass; // Password baru
+    
+    const r = await fetchAPI('saveMember', { data: data });
+    btnLoad('btnSaveProfil', false);
+    
+    if(r.success) {
+      toast('Profil berhasil diperbarui!', 'success');
+      el('myPass').value = '';
+      currUser.hp = hp;
+      safeLS('set', 'kp_sess', JSON.stringify(currUser));
+    } else {
+      toast(r.message || 'Gagal menyimpan', 'error');
+    }
+  } catch(e) {
+    btnLoad('btnSaveProfil', false);
+    toast('Terjadi kesalahan jaringan', 'error');
+  }
+}
+
 </script>
 </body>
 </html>
