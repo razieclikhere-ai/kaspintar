@@ -1073,7 +1073,7 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
         <div class="ph">
           <div><h2>Iuran</h2><p>Catatan iuran anggota</p></div>
           <div class="ph-acts">
-            <button class="btn btn-gh" onclick="exportIuranPDF()">
+            <button class="btn btn-gh col-admin" onclick="exportIuranPDF()">
               <i class="bi bi-file-earmark-arrow-down"></i>Export PDF
             </button>
             <button class="btn btn-bl col-admin" onclick="openIuranForm()">
@@ -1081,7 +1081,7 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
             </button>
           </div>
         </div>
-        <div class="tabs">
+        <div class="tabs col-admin">
           <button class="tab active" onclick="switchTab('tIuranList',this)">Semua Iuran</button>
           <button class="tab" onclick="switchTab('tStatusBayar',this)">Status Bayar</button>
         </div>
@@ -1154,7 +1154,7 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
       <div id="p-tunggakan" class="ps">
         <div class="ph">
           <div><h2>Tunggakan</h2><p>Anggota belum bayar iuran</p></div>
-          <button class="btn btn-gh" onclick="exportPDF('tngReport','Tunggakan')">
+          <button class="btn btn-gh col-admin" onclick="exportPDF('tngReport','Tunggakan')">
             <i class="bi bi-file-earmark-arrow-down"></i>Export PDF
           </button>
         </div>
@@ -2254,6 +2254,7 @@ async function loadTable(type) {
     // TABEL IURAN
     else if (type === 'iuran') {
       const tb = el('tbI');
+      const isAdmin = currUser.role === 'Admin';
       if (!data.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="bi bi-wallet"></i><p>Belum ada data iuran</p></div></td></tr>'; return; }
       tb.innerHTML = data.map((x, i) => `<tr>
         <td style="color:var(--ink4);font-size:11px;font-weight:700;">${i+1}</td>
@@ -2264,10 +2265,10 @@ async function loadTable(type) {
         <td style="font-weight:800;color:var(--greend);">${fmt(x.nominal)}</td>
         <td style="max-width:150px;white-space:normal;">${x.ket||'-'}</td>
         <td>
-          <div style="display:flex;gap:6px;">
+          ${isAdmin ? `<div style="display:flex;gap:6px;">
             <button class="btn btn-gh btn-sm btn-ic" onclick='editIuran(${JSON.stringify(x).replace(/'/g,"&#39;")})'><i class="bi bi-pencil-fill"></i></button>
             <button class="btn btn-rd btn-sm btn-ic" onclick="delRow('iuran','${x.id}')"><i class="bi bi-trash-fill"></i></button>
-          </div>
+          </div>` : '<span style="font-size:11px;color:var(--ink3);font-weight:700;">-</span>'}
         </td>
       </tr>`).join('');
     }
