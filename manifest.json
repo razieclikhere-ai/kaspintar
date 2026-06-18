@@ -1,15 +1,27 @@
 {
   "name": "Singkil Bakeri Kas",
-  "short_name": "SingkilBakeryKas",
+  "short_name": "SingkilKas",
+  "description": "Sistem aplikasi keuangan dan kas cerdas untuk tim Singkil Bakeri.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#FFF5F7",
   "theme_color": "#FF758F",
+  "dir": "ltr",
+  "lang": "id-ID",
+  "categories": ["finance", "business"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='48' fill='%23FF758F'/%3E%3Ctext x='50%25' y='54%25' font-size='96' text-anchor='middle' dominant-baseline='middle'%3E%F0%9F%A5%90%3C/text%3E%3C/svg%3E",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
