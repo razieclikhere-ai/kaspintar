@@ -5,6 +5,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Singkil Bakeri Kas</title>
+<meta name="theme-color" content="#FF758F">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=SB&background=FF758F&color=fff&size=192&bold=true">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
@@ -1248,7 +1251,11 @@ textarea.fc { height: 100px; padding: 14px 16px; resize: none; border-radius: 20
           <div class="fg"><label class="fl">Ganti Password</label>
             <input type="password" class="fc" id="myPass" placeholder="Kosongkan jika tidak ingin ganti password"></div>
           
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:24px;">
+          <button class="btn btn-gh" style="width:100%; height:50px; justify-content:center; margin-top:24px; display:none; border-color:var(--blue); color:var(--blue);" id="btnInstallApp">
+            <i class="bi bi-download"></i> Install Aplikasi ke Layar HP
+          </button>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
             <button class="btn btn-rd" style="height:50px; justify-content:center;" onclick="doLogout()">
               <i class="bi bi-box-arrow-right"></i> Keluar
             </button>
@@ -2821,7 +2828,38 @@ async function saveMyProfil() {
     toast('Terjadi kesalahan jaringan', 'error');
   }
 }
+</script>
 
+<script>
+  let deferredPrompt;
+
+  // Menangkap sinyal dari HP bahwa aplikasi bisa di-install
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Munculkan tombol install jika belum di-install
+    const btnInstall = document.getElementById('btnInstallApp');
+    if (btnInstall) {
+      btnInstall.style.display = 'flex';
+      
+      btnInstall.addEventListener('click', () => {
+        btnInstall.style.display = 'none'; // Sembunyikan tombol setelah diklik
+        deferredPrompt.prompt(); // Munculkan jendela install dari HP
+        deferredPrompt.userChoice.then((choiceResult) => {
+          deferredPrompt = null;
+        });
+      });
+    }
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Aplikasi siap di-install di HP!'))
+        .catch(err => console.log('PWA gagal:', err));
+    });
+  }
 </script>
 </body>
 </html>
